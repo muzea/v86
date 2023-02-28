@@ -485,10 +485,15 @@ V86Starter.prototype.continue_init = async function(emulator, options)
     {
         var fs_url = options["filesystem"].basefs;
         var base_url = options["filesystem"].baseurl;
+        var use_pack = options["filesystem"].use_pack;
 
         let file_storage = new MemoryFileStorage();
 
-        if(base_url)
+        if(use_pack)
+        {
+            file_storage = new ServerPackStorageWrapper(file_storage, base_url);
+        }
+        else if(base_url)
         {
             file_storage = new ServerFileStorageWrapper(file_storage, base_url);
         }
@@ -1335,15 +1340,15 @@ function FileNotFoundError(message)
 FileNotFoundError.prototype = Error.prototype;
 
 // Closure Compiler's way of exporting
-if(typeof window !== "undefined")
-{
-    window["V86Starter"] = V86Starter;
-    window["V86"] = V86Starter;
-}
-else if(typeof module !== "undefined" && typeof module.exports !== "undefined")
+if(typeof module !== "undefined" && typeof module.exports !== "undefined")
 {
     module.exports["V86Starter"] = V86Starter;
     module.exports["V86"] = V86Starter;
+}
+else if(typeof window !== "undefined")
+{
+    window["V86Starter"] = V86Starter;
+    window["V86"] = V86Starter;
 }
 else if(typeof importScripts === "function")
 {

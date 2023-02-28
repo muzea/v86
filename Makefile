@@ -23,6 +23,8 @@ default: build/v86-debug.wasm
 all: build/v86_all.js build/libv86.js build/v86.wasm
 all-debug: build/libv86-debug.js build/v86-debug.wasm
 browser: build/v86_all.js
+libv86-js: build/libv86.js build/libv86-debug.js
+libv86: build/libv86.js build/v86.wasm build/libv86-debug.js build/v86-debug.wasm build/capstone-x86.min.js build/libwabt.js
 
 # Used for nodejs builds and in order to profile code.
 # `debug` gives identifiers a readable name, make sure it doesn't have any side effects.

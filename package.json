@@ -1,0 +1,16 @@
+{
+    "name": "@woodenfish/libv86",
+    "version": "0.0.2-alpha.2",
+    "description": "A bundler-friendly version of the v86 PC Emulator",
+    "license": "BSD-2-Clause",
+    "main": "build/libv86.js",
+    "sideEffects": true,
+    "files": [
+        "/bios",
+        "/build/*.js",
+        "/build/*.wasm",
+        "index.d.ts",
+        "LICENSE"
+    ],
+    "types": "./index.d.ts"
+}
