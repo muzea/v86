@@ -136,7 +136,7 @@ ServerFileStorageWrapper.prototype.uncache = function (sha256sum) {
  * @implements {FileStorageInterface}
  */
 class ServerPackStorageWrapper {
-    constructor(file_storage, baseurl) {
+    constructor(file_storage, baseurl, use_pack) {
         dbg_assert(baseurl, "ServerMemoryFileStorage: baseurl should not be empty");
 
         this.storage = file_storage;
@@ -144,6 +144,7 @@ class ServerPackStorageWrapper {
         // store promise avoid parallel calls
         this.fileInfoMap = {};
         this.packMap = {};
+        this.prefix_length = typeof use_pack === 'object' ? use_pack.prefix_length : 1;
     }
 
     /**
@@ -153,7 +154,7 @@ class ServerPackStorageWrapper {
     async load_from_server(sha256sum) {
         console.log('try load file ', sha256sum);
         // check file map
-        const prefix = sha256sum.substring(0, 1);
+        const prefix = sha256sum.substring(0, this.prefix_length);
         if (!this.fileInfoMap[prefix]) {
 
             this.fileInfoMap[prefix] = new Promise((resolveMap) => {

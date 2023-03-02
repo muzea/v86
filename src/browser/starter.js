@@ -491,7 +491,7 @@ V86Starter.prototype.continue_init = async function(emulator, options)
 
         if(use_pack)
         {
-            file_storage = new ServerPackStorageWrapper(file_storage, base_url);
+            file_storage = new ServerPackStorageWrapper(file_storage, base_url, use_pack);
         }
         else if(base_url)
         {
