@@ -425,7 +425,7 @@ class ServerPackStorageWrapper {
             this.fileInfoMap[prefix] = new Promise((resolveMap) => {
                 const resourceUrl = this.baseurl + `${prefix}.map.json`;
 
-                function loadResource() {
+                const loadResource = () => {
                     v86util.load_file(resourceUrl, {
                         as_json: true,
                         /**
@@ -466,7 +466,7 @@ class ServerPackStorageWrapper {
             this.packMap[prefix] = new Promise((resolvePack) => {
                 const resourceUrl = this.baseurl + `${prefix}.pack`;
 
-                function loadResource() {
+                const loadResource = () => {
                     v86util.load_file(resourceUrl, {
                         /**
                          * @param {ArrayBuffer} buffer 
