@@ -65,7 +65,7 @@ CLOSURE_FLAGS=\
 		--jscomp_error visibility\
 		--use_types_for_optimization\
 		--summary_detail_level 3\
-		--language_in ECMASCRIPT_2017\
+		--language_in ECMASCRIPT_2018\
 		--language_out ECMASCRIPT_2017
 
 CARGO_FLAGS_SAFE=\
