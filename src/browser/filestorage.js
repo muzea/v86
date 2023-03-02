@@ -425,49 +425,68 @@ class ServerPackStorageWrapper {
             this.fileInfoMap[prefix] = new Promise((resolveMap) => {
                 const resourceUrl = this.baseurl + `${prefix}.map.json`;
 
-                if (this.kv && this.kv.has(resourceUrl)) {
-                    return resolveMap(this.kv.get(resourceUrl));
-                }
-                v86util.load_file(resourceUrl, {
-                    as_json: true,
-                    /**
-                     * @param {Array<number>} resp 
-                     */
-                    done: async resp => {
-                        const infoMap = {};
-                        let i = 0;
-                        let end = resp.length;
-                        let start = 0;
-                        while (i < end) {
-                            const fileEnd = start + resp[i + 1];
-                            infoMap[resp[i]] = {
-                                start: start,
-                                end: fileEnd,
-                            }
-                            start = fileEnd;
+                function loadResource() {
+                    v86util.load_file(resourceUrl, {
+                        as_json: true,
+                        /**
+                         * @param {Array<number>} resp 
+                         */
+                        done: async resp => {
+                            const infoMap = {};
+                            let i = 0;
+                            let end = resp.length;
+                            let start = 0;
+                            while (i < end) {
+                                const fileEnd = start + resp[i + 1];
+                                infoMap[resp[i]] = {
+                                    start: start,
+                                    end: fileEnd,
+                                }
+                                start = fileEnd;
 
-                            i += 2;
+                                i += 2;
+                            }
+                            this.kv && this.kv.set(resourceUrl, infoMap);
+                            resolveMap(infoMap);
                         }
-                        this.kv && this.kv.set(resourceUrl, infoMap);
-                        resolveMap(infoMap);
-                    }
-                });
+                    });
+                }
+
+                if (this.kv) {
+                    return this.kv.has(resourceUrl).then(hasCache => {
+                        if (hasCache) {
+                            return resolveMap(this.kv.get(resourceUrl));
+                        }
+                        loadResource();
+                    });
+                }
+                loadResource();
             });
 
             this.packMap[prefix] = new Promise((resolvePack) => {
                 const resourceUrl = this.baseurl + `${prefix}.pack`;
-                if (this.kv && this.kv.has(resourceUrl)) {
-                    return resolvePack(this.kv.get(resourceUrl));
+
+                function loadResource() {
+                    v86util.load_file(resourceUrl, {
+                        /**
+                         * @param {ArrayBuffer} buffer 
+                         */
+                        done: async buffer => {
+                            this.kv && this.kv.set(resourceUrl, buffer);
+                            resolvePack(buffer);
+                        }
+                    });
                 }
-                v86util.load_file(resourceUrl, {
-                    /**
-                     * @param {ArrayBuffer} buffer 
-                     */
-                    done: async buffer => {
-                        this.kv && this.kv.set(resourceUrl, buffer);
-                        resolvePack(buffer);
-                    }
-                });
+
+                if (this.kv) {
+                    return this.kv.has(resourceUrl).then(hasCache => {
+                        if (hasCache) {
+                            return resolvePack(this.kv.get(resourceUrl));
+                        }
+                        loadResource();
+                    });
+                }
+                loadResource();
             });
         }
 
