@@ -223,7 +223,7 @@ function SerialAdapterXtermJS(element, bus)
         return;
     }
 
-    var term = this.term = new window["Terminal"]();
+    var term = this.term = new window["Terminal"]({ allowProposedApi: true });
     if (term["setOption"]) {
         term["setOption"]("logLevel", "off");
     } else {
