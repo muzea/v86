@@ -131,7 +131,7 @@ ServerFileStorageWrapper.prototype.uncache = function (sha256sum) {
     this.storage.uncache(sha256sum);
 };
 
-let fsCache = caches.open("v86-fs-request");
+const fsPackCache = window.caches.open("v86-fs-request");
 
 /**
  *
@@ -139,7 +139,7 @@ let fsCache = caches.open("v86-fs-request");
  * @returns {Promise<Response>}
  */
 async function fetchWithCache(url) {
-    const cacheIns = await fsCache;
+    const cacheIns = await fsPackCache;
     const maybeResult = await cacheIns.match(url);
     if (maybeResult) return maybeResult;
 
@@ -154,7 +154,7 @@ async function fetchWithCache(url) {
  * @param {string} url
  * @returns {Promise<ArrayBuffer>}
  */
-export async function fetchArrayBuffer(url) {
+async function fetchArrayBuffer(url) {
     return (await fetchWithCache(url)).arrayBuffer();
 }
 
@@ -171,11 +171,11 @@ class ServerPackStorageWrapper {
         this.packMap = {};
 
         /**
+         * Map<number, { p: number; s: number; l: number }>
          * p - pack
          * The file is in the p-th pack congregation
          * s - start
          * l - length
-         * @type {Map<number, { p: number; s: number; l: number }>}
          */
         this.fileMap = use_pack.fileMap;
     }
