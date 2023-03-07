@@ -181,6 +181,20 @@ if(typeof process !== "undefined")
 //        tick = null;
 //    };
 //}
+else if (typeof window !== "undefined" && typeof scheduler !== "undefined")
+{
+    v86.prototype.yield = function(t)
+    {
+        if (t < 1) {
+            this.do_tick();
+        } else {
+            scheduler.postTask(() => { this.do_tick(); }, { priority: 'user-blocking', delay: t });
+        }
+    };
+
+    v86.prototype.register_yield = function() {};
+    v86.prototype.unregister_yield = function() {};
+}
 else
 {
     v86.prototype.yield = function(t)
