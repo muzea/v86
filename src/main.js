@@ -4,8 +4,7 @@
  * @constructor
  * @param {Object=} wasm
  */
-function v86(bus, wasm)
-{
+function v86(bus, wasm) {
     /** @type {boolean} */
     this.running = false;
 
@@ -16,7 +15,9 @@ function v86(bus, wasm)
     this.worker = null;
 
     /** @type {CPU} */
-    this.cpu = new CPU(bus, wasm, () => { this.idle && this.next_tick(0); });
+    this.cpu = new CPU(bus, wasm, () => {
+        this.idle && this.next_tick(0);
+    });
 
     this.bus = bus;
     bus.register("cpu-init", this.init, this);
@@ -27,12 +28,10 @@ function v86(bus, wasm)
     this.register_yield();
 }
 
-v86.prototype.run = function()
-{
+v86.prototype.run = function () {
     this.stopping = false;
 
-    if(!this.running)
-    {
+    if (!this.running) {
         this.running = true;
         this.bus.send("emulator-started");
     }
@@ -40,10 +39,8 @@ v86.prototype.run = function()
     this.next_tick(0);
 };
 
-v86.prototype.do_tick = function()
-{
-    if(this.stopping || !this.running)
-    {
+v86.prototype.do_tick = function () {
+    if (this.stopping || !this.running) {
         this.stopping = this.running = false;
         this.bus.send("emulator-stopped");
         return;
@@ -55,62 +52,49 @@ v86.prototype.do_tick = function()
     this.next_tick(t);
 };
 
-v86.prototype.next_tick = function(t)
-{
+v86.prototype.next_tick = function (t) {
     const tick = ++this.tick_counter;
     this.idle = true;
     this.yield(t, tick);
 };
 
-v86.prototype.yield_callback = function(tick)
-{
-    if(tick === this.tick_counter)
-    {
+v86.prototype.yield_callback = function (tick) {
+    if (tick === this.tick_counter) {
         this.do_tick();
     }
 };
 
-v86.prototype.stop = function()
-{
-    if(this.running)
-    {
+v86.prototype.stop = function () {
+    if (this.running) {
         this.stopping = true;
     }
 };
 
-v86.prototype.destroy = function()
-{
+v86.prototype.destroy = function () {
     this.unregister_yield();
 };
 
-v86.prototype.restart = function()
-{
+v86.prototype.restart = function () {
     this.cpu.reset_cpu();
     this.cpu.load_bios();
 };
 
-v86.prototype.init = function(settings)
-{
+v86.prototype.init = function (settings) {
     this.cpu.init(settings, this.bus);
     this.bus.send("emulator-ready");
 };
 
-if(typeof process !== "undefined")
-{
-    v86.prototype.yield = function(t, tick)
-    {
-        if(t < 1)
-        {
-            global.setImmediate(tick => this.yield_callback(tick), tick);
-        }
-        else
-        {
-            setTimeout(tick => this.yield_callback(tick), t, tick);
+if (typeof process !== "undefined") {
+    v86.prototype.yield = function (t, tick) {
+        if (t < 1) {
+            global.setImmediate((tick) => this.yield_callback(tick), tick);
+        } else {
+            setTimeout((tick) => this.yield_callback(tick), t, tick);
         }
     };
 
-    v86.prototype.register_yield = function() {};
-    v86.prototype.unregister_yield = function() {};
+    v86.prototype.register_yield = function () {};
+    v86.prototype.unregister_yield = function () {};
 }
 // else if(typeof Worker !== "undefined")
 // {
@@ -181,66 +165,57 @@ if(typeof process !== "undefined")
 //        tick = null;
 //    };
 //}
-else if (typeof window !== "undefined" && typeof scheduler !== "undefined")
-{
-    v86.prototype.yield = function(t)
-    {
+else if (typeof window !== "undefined" && typeof scheduler !== "undefined") {
+    v86.prototype.yield = function (t, tick) {
         if (t < 1) {
-            this.do_tick();
+            this.yield_callback(tick);
         } else {
-            scheduler.postTask(() => { this.do_tick(); }, { priority: 'user-blocking', delay: t });
+            scheduler.postTask(
+                () => {
+                    this.yield_callback(tick);
+                },
+                { delay: t }
+            );
         }
     };
 
-    v86.prototype.register_yield = function() {};
-    v86.prototype.unregister_yield = function() {};
-}
-else
-{
-    v86.prototype.yield = function(t)
-    {
+    v86.prototype.register_yield = function () {};
+    v86.prototype.unregister_yield = function () {};
+} else {
+    v86.prototype.yield = function (t) {
         if (t < 1) {
             this.do_tick();
         } else {
-            setTimeout(() => { this.do_tick(); }, t);
+            setTimeout(() => {
+                this.do_tick();
+            }, t);
         }
     };
 
-    v86.prototype.register_yield = function() {};
-    v86.prototype.unregister_yield = function() {};
+    v86.prototype.register_yield = function () {};
+    v86.prototype.unregister_yield = function () {};
 }
 
-v86.prototype.save_state = function()
-{
+v86.prototype.save_state = function () {
     // TODO: Should be implemented here, not on cpu
     return this.cpu.save_state();
 };
 
-v86.prototype.restore_state = function(state)
-{
+v86.prototype.restore_state = function (state) {
     // TODO: Should be implemented here, not on cpu
     return this.cpu.restore_state(state);
 };
 
-
-if(typeof performance === "object" && performance.now)
-{
+if (typeof performance === "object" && performance.now) {
     v86.microtick = performance.now.bind(performance);
-}
-else if(typeof require === "function")
-{
+} else if (typeof require === "function") {
     const { performance } = require("perf_hooks");
     v86.microtick = performance.now.bind(performance);
-}
-else if(typeof process === "object" && process.hrtime)
-{
-    v86.microtick = function()
-    {
+} else if (typeof process === "object" && process.hrtime) {
+    v86.microtick = function () {
         var t = process.hrtime();
         return t[0] * 1000 + t[1] / 1e6;
     };
-}
-else
-{
+} else {
     v86.microtick = Date.now;
 }

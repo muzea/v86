@@ -133,6 +133,10 @@ ServerFileStorageWrapper.prototype.uncache = function (sha256sum) {
 
 const fsPackCache = window.caches.open("v86-fs-request");
 
+if (DEBUG) {
+    window.fsReadList = [];
+}
+
 /**
  *
  * @param {string} url
@@ -187,6 +191,9 @@ class ServerPackStorageWrapper {
     async load_from_server(sha256sum) {
         // https://jsben.ch/qIzmj
         const hash = parseInt(sha256sum.substring(0, 8), 16);
+        if (DEBUG) {
+            window.fsReadList.push(hash);
+        }
         const fileInfo = this.fileMap.get(hash);
         // check pack is load status
         if (!this.packMap[fileInfo.p]) {
