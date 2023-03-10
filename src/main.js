@@ -96,39 +96,39 @@ if (typeof process !== "undefined") {
     v86.prototype.register_yield = function () {};
     v86.prototype.unregister_yield = function () {};
 }
-// else if(typeof Worker !== "undefined")
-// {
-//     // XXX: This has a slightly lower throughput compared to window.postMessage
+else if(typeof Worker !== "undefined")
+{
+    // XXX: This has a slightly lower throughput compared to window.postMessage
 
-//     function the_worker()
-//     {
-//         globalThis.onmessage = function(e)
-//         {
-//             const t = e.data.t;
-//             if(t < 1) postMessage(e.data.tick);
-//             else setTimeout(() => postMessage(e.data.tick), t);
-//         };
-//     }
+    function the_worker()
+    {
+        globalThis.onmessage = function(e)
+        {
+            const t = e.data.t;
+            if(t < 1) postMessage(e.data.tick);
+            else setTimeout(() => postMessage(e.data.tick), t);
+        };
+    }
 
-//     v86.prototype.register_yield = function()
-//     {
-//         const url = URL.createObjectURL(new Blob(["(" + the_worker.toString() + ")()"], { type: "text/javascript" }));
-//         this.worker = new Worker(url);
-//         this.worker.onmessage = e => this.yield_callback(e.data);
-//         URL.revokeObjectURL(url);
-//     };
+    v86.prototype.register_yield = function()
+    {
+        const url = URL.createObjectURL(new Blob(["(" + the_worker.toString() + ")()"], { type: "text/javascript" }));
+        this.worker = new Worker(url);
+        this.worker.onmessage = e => this.yield_callback(e.data);
+        URL.revokeObjectURL(url);
+    };
 
-//     v86.prototype.yield = function(t, tick)
-//     {
-//         this.worker.postMessage({ t, tick });
-//     };
+    v86.prototype.yield = function(t, tick)
+    {
+        this.worker.postMessage({ t, tick });
+    };
 
-//     v86.prototype.unregister_yield = function()
-//     {
-//         this.worker.terminate();
-//         this.worker = null;
-//     };
-// }
+    v86.prototype.unregister_yield = function()
+    {
+        this.worker.terminate();
+        this.worker = null;
+    };
+}
 //else if(typeof window !== "undefined" && typeof postMessage !== "undefined")
 //{
 //    // setImmediate shim for the browser.
@@ -165,23 +165,24 @@ if (typeof process !== "undefined") {
 //        tick = null;
 //    };
 //}
-else if (typeof window !== "undefined" && typeof scheduler !== "undefined") {
-    v86.prototype.yield = function (t, tick) {
-        if (t < 1) {
-            this.yield_callback(tick);
-        } else {
-            scheduler.postTask(
-                () => {
-                    this.yield_callback(tick);
-                },
-                { delay: t }
-            );
-        }
-    };
+// else if (typeof window !== "undefined" && typeof scheduler !== "undefined") {
+//     v86.prototype.yield = function (t, tick) {
+//         if (t < 1) {
+//             this.yield_callback(tick);
+//         } else {
+//             scheduler.postTask(
+//                 () => {
+//                     this.yield_callback(tick);
+//                 },
+//                 { delay: t }
+//             );
+//         }
+//     };
 
-    v86.prototype.register_yield = function () {};
-    v86.prototype.unregister_yield = function () {};
-} else {
+//     v86.prototype.register_yield = function () {};
+//     v86.prototype.unregister_yield = function () {};
+// }
+else {
     v86.prototype.yield = function (t) {
         if (t < 1) {
             this.do_tick();

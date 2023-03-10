@@ -1,6 +1,6 @@
 {
   "name": "@woodenfish/libv86",
-  "version": "0.0.2-alpha.14",
+  "version": "0.0.2-alpha.15",
   "description": "A bundler-friendly version of the v86 PC Emulator",
   "license": "BSD-2-Clause",
   "main": "build/libv86.js",
