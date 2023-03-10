@@ -483,42 +483,8 @@ V86Starter.prototype.continue_init = async function(emulator, options)
 
     if(options["filesystem"])
     {
-        var fs_url = options["filesystem"].basefs;
-        var base_url = options["filesystem"].baseurl;
-        var use_pack = options["filesystem"].use_pack;
-
-        let file_storage = new MemoryFileStorage();
-
-        if(use_pack)
-        {
-            file_storage = new ServerPackStorageWrapper(file_storage, base_url, use_pack);
-        }
-        else if(base_url)
-        {
-            file_storage = new ServerFileStorageWrapper(file_storage, base_url);
-        }
-        settings.fs9p = this.fs9p = new FS(file_storage);
-
-        if(fs_url)
-        {
-            dbg_assert(base_url, "Filesystem: baseurl must be specified");
-
-            var size;
-
-            if(typeof fs_url === "object")
-            {
-                size = fs_url.size;
-                fs_url = fs_url.url;
-            }
-            dbg_assert(typeof fs_url === "string");
-
-            files_to_load.push({
-                name: "fs9p_json",
-                url: fs_url,
-                size: size,
-                as_json: true,
-            });
-        }
+        // Assume a Filer fs is passed to us via filesystem
+        settings.fs9p = options["filesystem"];
     }
 
     var starter = this;
@@ -1109,122 +1075,122 @@ V86Starter.prototype.serial_send_bytes = function(serial, data)
     }
 };
 
-/**
- * Mount another filesystem to the current filesystem.
- * @param {string} path Path for the mount point
- * @param {string|undefined} baseurl
- * @param {string|undefined} basefs As a JSON string
- * @param {function(Object)=} callback
- * @export
- */
-V86Starter.prototype.mount_fs = async function(path, baseurl, basefs, callback)
-{
-    let file_storage = new MemoryFileStorage();
+// /**
+//  * Mount another filesystem to the current filesystem.
+//  * @param {string} path Path for the mount point
+//  * @param {string|undefined} baseurl
+//  * @param {string|undefined} basefs As a JSON string
+//  * @param {function(Object)=} callback
+//  * @export
+//  */
+// V86Starter.prototype.mount_fs = async function(path, baseurl, basefs, callback)
+// {
+//     let file_storage = new MemoryFileStorage();
 
-    if(baseurl)
-    {
-        file_storage = new ServerFileStorageWrapper(file_storage, baseurl);
-    }
-    const newfs = new FS(file_storage, this.fs9p.qidcounter);
-    const mount = () =>
-    {
-        const idx = this.fs9p.Mount(path, newfs);
-        if(!callback)
-        {
-            return;
-        }
-        if(idx === -ENOENT)
-        {
-            callback(new FileNotFoundError());
-        }
-        else if(idx === -EEXIST)
-        {
-            callback(new FileExistsError());
-        }
-        else if(idx < 0)
-        {
-            dbg_assert(false, "Unexpected error code: " + (-idx));
-            callback(new Error("Failed to mount. Error number: " + (-idx)));
-        }
-        else
-        {
-            callback(null);
-        }
-    };
-    if(baseurl)
-    {
-        dbg_assert(typeof basefs === "object", "Filesystem: basefs must be a JSON object");
-        newfs.load_from_json(basefs, () => mount());
-    }
-    else
-    {
-        mount();
-    }
-};
+//     if(baseurl)
+//     {
+//         file_storage = new ServerFileStorageWrapper(file_storage, baseurl);
+//     }
+//     const newfs = new FS(file_storage, this.fs9p.qidcounter);
+//     const mount = () =>
+//     {
+//         const idx = this.fs9p.Mount(path, newfs);
+//         if(!callback)
+//         {
+//             return;
+//         }
+//         if(idx === -ENOENT)
+//         {
+//             callback(new FileNotFoundError());
+//         }
+//         else if(idx === -EEXIST)
+//         {
+//             callback(new FileExistsError());
+//         }
+//         else if(idx < 0)
+//         {
+//             dbg_assert(false, "Unexpected error code: " + (-idx));
+//             callback(new Error("Failed to mount. Error number: " + (-idx)));
+//         }
+//         else
+//         {
+//             callback(null);
+//         }
+//     };
+//     if(baseurl)
+//     {
+//         dbg_assert(typeof basefs === "object", "Filesystem: basefs must be a JSON object");
+//         newfs.load_from_json(basefs, () => mount());
+//     }
+//     else
+//     {
+//         mount();
+//     }
+// };
 
-/**
- * Write to a file in the 9p filesystem. Nothing happens if no filesystem has
- * been initialized.
- *
- * @param {string} file
- * @param {Uint8Array} data
- * @export
- */
-V86Starter.prototype.create_file = async function(file, data)
-{
-    dbg_assert(arguments.length === 2);
-    var fs = this.fs9p;
+// /**
+//  * Write to a file in the 9p filesystem. Nothing happens if no filesystem has
+//  * been initialized.
+//  *
+//  * @param {string} file
+//  * @param {Uint8Array} data
+//  * @export
+//  */
+// V86Starter.prototype.create_file = async function(file, data)
+// {
+//     dbg_assert(arguments.length === 2);
+//     var fs = this.fs9p;
 
-    if(!fs)
-    {
-        return;
-    }
+//     if(!fs)
+//     {
+//         return;
+//     }
 
-    var parts = file.split("/");
-    var filename = parts[parts.length - 1];
+//     var parts = file.split("/");
+//     var filename = parts[parts.length - 1];
 
-    var path_infos = fs.SearchPath(file);
-    var parent_id = path_infos.parentid;
-    var not_found = filename === "" || parent_id === -1;
+//     var path_infos = fs.SearchPath(file);
+//     var parent_id = path_infos.parentid;
+//     var not_found = filename === "" || parent_id === -1;
 
-    if(!not_found)
-    {
-        await fs.CreateBinaryFile(filename, parent_id, data);
-    }
-    else
-    {
-        return Promise.reject(new FileNotFoundError());
-    }
-};
+//     if(!not_found)
+//     {
+//         await fs.CreateBinaryFile(filename, parent_id, data);
+//     }
+//     else
+//     {
+//         return Promise.reject(new FileNotFoundError());
+//     }
+// };
 
-/**
- * Read a file in the 9p filesystem. Nothing happens if no filesystem has been
- * initialized.
- *
- * @param {string} file
- * @export
- */
-V86Starter.prototype.read_file = async function(file)
-{
-    dbg_assert(arguments.length === 1);
-    var fs = this.fs9p;
+// /**
+//  * Read a file in the 9p filesystem. Nothing happens if no filesystem has been
+//  * initialized.
+//  *
+//  * @param {string} file
+//  * @export
+//  */
+// V86Starter.prototype.read_file = async function(file)
+// {
+//     dbg_assert(arguments.length === 1);
+//     var fs = this.fs9p;
 
-    if(!fs)
-    {
-        return;
-    }
+//     if(!fs)
+//     {
+//         return;
+//     }
 
-    const result = await fs.read_file(file);
+//     const result = await fs.read_file(file);
 
-    if(result)
-    {
-        return result;
-    }
-    else
-    {
-        return Promise.reject(new FileNotFoundError());
-    }
-};
+//     if(result)
+//     {
+//         return result;
+//     }
+//     else
+//     {
+//         return Promise.reject(new FileNotFoundError());
+//     }
+// };
 
 V86Starter.prototype.automatically = function(steps)
 {

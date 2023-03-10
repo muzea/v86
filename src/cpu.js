@@ -884,9 +884,15 @@ CPU.prototype.init = function(settings, device_bus)
             this.devices.net = new Ne2k(this, device_bus, settings.preserve_mac_from_state_image, settings.mac_address_translation);
         }
 
+        // if(settings.fs9p)
+        // {
+        //     this.devices.virtio_9p = new Virtio9p(settings.fs9p, this, device_bus);
+
+        // }
+
         if(settings.fs9p)
         {
-            this.devices.virtio_9p = new Virtio9p(settings.fs9p, this, device_bus);
+            this.devices.virtio = new VirtIO9P(this, device_bus, settings.fs9p);
         }
 
         if(true)
